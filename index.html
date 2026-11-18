@@ -20,26 +20,8 @@
         var audio = document.getElementById('bg-music');
         if (!audio) return;
         audio.volume = 0.45;
+        // Just start muted silently — React will handle unlocking
         audio.play().catch(function () {});
-
-        var unlocked = false;
-        var events = ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown', 'scroll'];
-
-        function unlock() {
-          if (unlocked) return;
-          unlocked = true;
-          audio.muted = false;
-          if (audio.paused) audio.play().catch(function () {});
-          events.forEach(function (e) {
-            window.removeEventListener(e, unlock, true);
-            document.removeEventListener(e, unlock, true);
-          });
-        }
-
-        events.forEach(function (e) {
-          window.addEventListener(e, unlock, { capture: true, passive: true });
-          document.addEventListener(e, unlock, { capture: true, passive: true });
-        });
       })();
     </script>
 

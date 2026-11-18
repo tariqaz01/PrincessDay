@@ -11,55 +11,79 @@ import FinalCelebration from "../components/FinalSection/FinalCelebration";
 function BirthdaySurprise() {
   const [step, setStep] = useState(1);
   const audioRef = useRef(null);
-  // isMuted = true means audio is muted (but always playing from start)
-  const [isMuted, setIsMuted] = useState(false);
+  const unlockedRef = useRef(false); // has the muted-autoplay been unlocked yet?
+  const [isMuted, setIsMuted] = useState(false); // icon: false = show 🎵
 
-  // ==========================================
-  // GLOBAL BACKGROUND MUSIC (Start to End)
-  // Uses muted autoplay trick — music starts muted, unmutes on first interaction
-  // ==========================================
   useEffect(() => {
-    // Grab the <audio> element injected in index.html (already autoplaying muted)
+    // Use the <audio> already in the DOM (muted + autoplay from index.html)
     let audio = document.getElementById("bg-music");
     if (!audio) {
-      // Fallback: create it if somehow not in DOM
       audio = new Audio("/music/Icelight.mp3");
       audio.id = "bg-music";
       audio.preload = "auto";
       audio.loop = true;
       audio.muted = true;
-      audio.playsInline = true;
       document.body.appendChild(audio);
-      audio.play().catch(() => { });
+      audio.play().catch(() => {});
     }
-
     audio.volume = 0.45;
     audioRef.current = audio;
-    // Always show 🎵 on load — audio is playing (just temporarily muted for autoplay trick)
-    // isMuted stays false unless user manually clicks mute button
-    setIsMuted(false);
+    setIsMuted(false); // always show 🎵 on load
 
-    return () => {};
+    // Unlock audio (unmute) on the FIRST user interaction that is NOT the music button.
+    // If the music button is the first click, toggleMute() handles unlocking instead.
+    const events = ["click", "touchstart", "pointerdown", "keydown", "scroll"];
+    const unlock = (e) => {
+      // Skip if the event is on our music button (toggleMute handles that case)
+      if (e.target && e.target.closest && e.target.closest("[data-music-btn]")) return;
+      if (unlockedRef.current) return;
+      unlockedRef.current = true;
+      audio.muted = false;
+      if (audio.paused) audio.play().catch(() => {});
+      events.forEach((evt) => window.removeEventListener(evt, unlock, true));
+    };
+    events.forEach((evt) =>
+      window.addEventListener(evt, unlock, { capture: true, passive: true })
+    );
+
+    return () => {
+      events.forEach((evt) => window.removeEventListener(evt, unlock, true));
+    };
   }, []);
 
   const toggleMute = () => {
     const audio = audioRef.current;
     if (!audio) return;
+
+    // First button press → treat as "unlock" (unmute the autoplay-muted audio), NOT as mute
+    if (!unlockedRef.current) {
+      unlockedRef.current = true;
+      audio.muted = false;
+      if (audio.paused) audio.play().catch(() => {});
+      setIsMuted(false);
+      return;
+    }
+
+    // Subsequent presses → normal mute / unmute toggle
     if (audio.paused) {
       audio.muted = false;
-      audio.play().catch(() => { });
+      audio.play().catch(() => {});
       setIsMuted(false);
     } else {
-      audio.muted = !audio.muted;
-      setIsMuted(audio.muted);
+      const next = !audio.muted;
+      audio.muted = next;
+      setIsMuted(next);
     }
   };
 
   const nextStep = () => {
     const audio = audioRef.current;
-    if (audio && audio.paused) {
-      audio.muted = false;
-      audio.play().catch(() => { });
+    if (audio) {
+      if (!unlockedRef.current) {
+        unlockedRef.current = true;
+        audio.muted = false;
+      }
+      if (audio.paused) audio.play().catch(() => {});
     }
     setStep((prev) => prev + 1);
   };
@@ -68,6 +92,7 @@ function BirthdaySurprise() {
     <div className="relative">
       {/* Floating Music Control Pill */}
       <button
+        data-music-btn="true"
         onClick={toggleMute}
         title={isMuted ? "Unmute Music" : "Mute Music"}
         className="
