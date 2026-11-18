@@ -19,8 +19,8 @@
   </head>
 
   <body>
-    <!-- Persistent background audio element loaded at HTML parse time -->
-    <audio id="bg-music" src="/music/Icelight.mp3" preload="auto" loop playsinline></audio>
+    <!-- Persistent background audio element loaded at HTML parse time with autoplay -->
+    <audio id="bg-music" src="/music/Icelight.mp3" autoplay preload="auto" loop playsinline></audio>
 
     <div id="root"></div>
 
@@ -40,9 +40,11 @@
 
         // Try playing immediately
         tryPlay();
+        document.addEventListener('DOMContentLoaded', tryPlay, { once: true });
+        window.addEventListener('load', tryPlay, { once: true });
 
-        // Immediate unlock on the very first touch/click anywhere on the screen
-        const events = ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown'];
+        // Immediate unlock on the very first touch/click/scroll anywhere
+        const events = ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown', 'scroll'];
         const unlock = function() {
           tryPlay();
           events.forEach(function(e) {

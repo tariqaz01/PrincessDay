@@ -11,7 +11,7 @@ import FinalCelebration from "../components/FinalSection/FinalCelebration";
 function BirthdaySurprise() {
   const [step, setStep] = useState(1);
   const audioRef = useRef(null);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // ==========================================
   // GLOBAL BACKGROUND MUSIC (Start to End)
@@ -24,27 +24,35 @@ function BirthdaySurprise() {
       audio.id = "bg-music";
       audio.preload = "auto";
       audio.loop = true;
+      audio.autoplay = true;
       audio.playsInline = true;
       document.body.appendChild(audio);
     }
 
     audio.volume = 0.45;
     audioRef.current = audio;
-    setIsMuted(audio.muted);
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+
+    if (!audio.paused) {
+      setIsPlaying(true);
+    }
 
     const startAudio = () => {
       if (audioRef.current && audioRef.current.paused) {
-        audioRef.current.play().catch(() => {
-          // Autoplay was blocked, will start on user interaction
-        });
+        audioRef.current.play().catch(() => {});
       }
     };
 
     // Attempt autoplay immediately
     startAudio();
 
-    // User gesture fallback (starts on very first click/tap anywhere)
-    const gestureEvents = ["click", "touchstart", "touchend", "pointerdown", "mousedown", "keydown"];
+    // User gesture fallback (starts on very first click/tap/scroll anywhere)
+    const gestureEvents = ["click", "touchstart", "touchend", "pointerdown", "mousedown", "keydown", "scroll"];
     const handleFirstGesture = () => {
       startAudio();
       gestureEvents.forEach((evt) => {
@@ -59,6 +67,8 @@ function BirthdaySurprise() {
     });
 
     return () => {
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
       gestureEvents.forEach((evt) => {
         window.removeEventListener(evt, handleFirstGesture, true);
         document.removeEventListener(evt, handleFirstGesture, true);
@@ -66,15 +76,12 @@ function BirthdaySurprise() {
     };
   }, []);
 
-  const toggleMute = () => {
+  const togglePlay = () => {
     if (!audioRef.current) return;
     if (audioRef.current.paused) {
       audioRef.current.play().catch(() => {});
-      audioRef.current.muted = false;
-      setIsMuted(false);
     } else {
-      audioRef.current.muted = !audioRef.current.muted;
-      setIsMuted(audioRef.current.muted);
+      audioRef.current.pause();
     }
   };
 
@@ -90,8 +97,8 @@ function BirthdaySurprise() {
     <div className="relative">
       {/* Floating Music Control Pill */}
       <button
-        onClick={toggleMute}
-        title={isMuted ? "Unmute Music" : "Mute Music"}
+        onClick={togglePlay}
+        title={isPlaying ? "Pause Music" : "Play Music"}
         className="
           fixed
           top-4
@@ -114,7 +121,7 @@ function BirthdaySurprise() {
           cursor-pointer
         "
       >
-        {isMuted ? "🔇" : "🎵"}
+        {isPlaying ? "🎵" : "🔇"}
       </button>
 
       {step === 1 && (
