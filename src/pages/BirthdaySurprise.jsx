@@ -35,23 +35,11 @@ function BirthdaySurprise() {
 
     audio.volume = 0.45;
     audioRef.current = audio;
+    // Always show 🎵 on load — audio is playing (just temporarily muted for autoplay trick)
+    // isMuted stays false unless user manually clicks mute button
+    setIsMuted(false);
 
-    // Sync icon with actual muted state (starts muted until user touches screen)
-    const syncMuted = () => setIsMuted(audio.muted);
-    syncMuted();
-
-    // Watch for the inline script's unlock (muted → unmuted transition)
-    const observer = new MutationObserver(syncMuted);
-    // No mutation for muted — use polling for 3s then stop
-    const timer = setInterval(() => {
-      setIsMuted(audio.muted);
-      if (!audio.muted) clearInterval(timer);
-    }, 100);
-    setTimeout(() => clearInterval(timer), 5000);
-
-    return () => {
-      clearInterval(timer);
-    };
+    return () => {};
   }, []);
 
   const toggleMute = () => {
