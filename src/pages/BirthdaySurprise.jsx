@@ -18,10 +18,19 @@ function BirthdaySurprise() {
   // Plays "/music/Icelight.mp3" continuously
   // ==========================================
   useEffect(() => {
-    const audio = new Audio("/music/Icelight.mp3");
-    audio.loop = true;
+    let audio = document.getElementById("bg-music");
+    if (!audio) {
+      audio = new Audio("/music/Icelight.mp3");
+      audio.id = "bg-music";
+      audio.preload = "auto";
+      audio.loop = true;
+      audio.playsInline = true;
+      document.body.appendChild(audio);
+    }
+
     audio.volume = 0.45;
     audioRef.current = audio;
+    setIsMuted(audio.muted);
 
     const startAudio = () => {
       if (audioRef.current && audioRef.current.paused) {
@@ -31,27 +40,29 @@ function BirthdaySurprise() {
       }
     };
 
-    // Attempt autoplay
+    // Attempt autoplay immediately
     startAudio();
 
     // User gesture fallback (starts on very first click/tap anywhere)
+    const gestureEvents = ["click", "touchstart", "touchend", "pointerdown", "mousedown", "keydown"];
     const handleFirstGesture = () => {
       startAudio();
-      window.removeEventListener("pointerdown", handleFirstGesture);
-      window.removeEventListener("keydown", handleFirstGesture);
+      gestureEvents.forEach((evt) => {
+        window.removeEventListener(evt, handleFirstGesture, true);
+        document.removeEventListener(evt, handleFirstGesture, true);
+      });
     };
 
-    window.addEventListener("pointerdown", handleFirstGesture);
-    window.addEventListener("keydown", handleFirstGesture);
+    gestureEvents.forEach((evt) => {
+      window.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
+      document.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
+    });
 
     return () => {
-      window.removeEventListener("pointerdown", handleFirstGesture);
-      window.removeEventListener("keydown", handleFirstGesture);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        audioRef.current = null;
-      }
+      gestureEvents.forEach((evt) => {
+        window.removeEventListener(evt, handleFirstGesture, true);
+        document.removeEventListener(evt, handleFirstGesture, true);
+      });
     };
   }, []);
 
@@ -59,6 +70,7 @@ function BirthdaySurprise() {
     if (!audioRef.current) return;
     if (audioRef.current.paused) {
       audioRef.current.play().catch(() => {});
+      audioRef.current.muted = false;
       setIsMuted(false);
     } else {
       audioRef.current.muted = !audioRef.current.muted;

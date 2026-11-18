@@ -5,6 +5,9 @@
 
     <link rel="icon" type="image/png" href="/images/cake.png" />
 
+    <!-- Preload background music immediately so there is zero delay on play -->
+    <link rel="preload" href="/music/Icelight.mp3" as="audio" type="audio/mpeg" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <meta
@@ -16,7 +19,45 @@
   </head>
 
   <body>
+    <!-- Persistent background audio element loaded at HTML parse time -->
+    <audio id="bg-music" src="/music/Icelight.mp3" preload="auto" loop playsinline></audio>
+
     <div id="root"></div>
+
+    <script>
+      (function() {
+        const audio = document.getElementById('bg-music');
+        if (!audio) return;
+        audio.volume = 0.45;
+
+        const tryPlay = function() {
+          if (audio && audio.paused) {
+            audio.play().catch(function() {
+              // Browser policy prevented autoplay; will trigger on first interaction
+            });
+          }
+        };
+
+        // Try playing immediately
+        tryPlay();
+
+        // Immediate unlock on the very first touch/click anywhere on the screen
+        const events = ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown'];
+        const unlock = function() {
+          tryPlay();
+          events.forEach(function(e) {
+            window.removeEventListener(e, unlock, true);
+            document.removeEventListener(e, unlock, true);
+          });
+        };
+
+        events.forEach(function(e) {
+          window.addEventListener(e, unlock, { once: true, capture: true, passive: true });
+          document.addEventListener(e, unlock, { once: true, capture: true, passive: true });
+        });
+      })();
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
