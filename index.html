@@ -5,26 +5,12 @@
     <link rel="icon" type="image/png" href="/images/cake.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="A little birthday surprise made with love." />
+    <!-- Preload music file so it's buffered before user clicks -->
     <link rel="preload" href="/music/Icelight.mp3" as="audio" type="audio/mpeg" />
     <title>Little Surprise 🎂</title>
   </head>
   <body>
-    <!-- AUTOPLAY FIX: muted autoplay is always allowed by browsers.
-         Music starts immediately (muted), then unmutes on first user touch. -->
-    <audio id="bg-music" src="/music/Icelight.mp3" autoplay muted preload="auto" loop playsinline></audio>
-
     <div id="root"></div>
-
-    <script>
-      (function () {
-        var audio = document.getElementById('bg-music');
-        if (!audio) return;
-        audio.volume = 0.45;
-        // Just start muted silently — React will handle unlocking
-        audio.play().catch(function () {});
-      })();
-    </script>
-
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
