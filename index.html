@@ -2,31 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
     <link rel="icon" type="image/png" href="/images/cake.png" />
-
-    <!-- Preload background music immediately so there is zero delay on play -->
-    <link rel="preload" href="/music/Icelight.mp3" as="audio" type="audio/mpeg" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <meta
-      name="description"
-      content="A little birthday surprise made with love."
-    />
-
+    <meta name="description" content="A little birthday surprise made with love." />
+    <link rel="preload" href="/music/Icelight.mp3" as="audio" type="audio/mpeg" />
     <title>Little Surprise 🎂</title>
   </head>
-
   <body>
-    <!--
-      AUTOPLAY FIX:
-      Browsers block unmuted autoplay. The trick: start MUTED (always allowed),
-      then unmute on the very first user interaction. Music plays from second 0,
-      user just never hears the brief muted moment before they touch the screen.
-    -->
-    <audio id="bg-music" src="/music/Icelight.mp3"
-           autoplay muted preload="auto" loop playsinline></audio>
+    <!-- AUTOPLAY FIX: muted autoplay is always allowed by browsers.
+         Music starts immediately (muted), then unmutes on first user touch. -->
+    <audio id="bg-music" src="/music/Icelight.mp3" autoplay muted preload="auto" loop playsinline></audio>
 
     <div id="root"></div>
 
@@ -35,11 +20,8 @@
         var audio = document.getElementById('bg-music');
         if (!audio) return;
         audio.volume = 0.45;
-
-        // Try muted autoplay (always works in every browser)
         audio.play().catch(function () {});
 
-        // On very first interaction: unmute and ensure playing
         var unlocked = false;
         var events = ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown', 'scroll'];
 
@@ -47,9 +29,7 @@
           if (unlocked) return;
           unlocked = true;
           audio.muted = false;
-          if (audio.paused) {
-            audio.play().catch(function () {});
-          }
+          if (audio.paused) audio.play().catch(function () {});
           events.forEach(function (e) {
             window.removeEventListener(e, unlock, true);
             document.removeEventListener(e, unlock, true);

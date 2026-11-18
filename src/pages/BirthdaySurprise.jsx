@@ -30,7 +30,7 @@ function BirthdaySurprise() {
       audio.muted = true;
       audio.playsInline = true;
       document.body.appendChild(audio);
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
     }
 
     audio.volume = 0.45;
@@ -59,7 +59,7 @@ function BirthdaySurprise() {
     if (!audio) return;
     if (audio.paused) {
       audio.muted = false;
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
       setIsMuted(false);
     } else {
       audio.muted = !audio.muted;
@@ -71,7 +71,7 @@ function BirthdaySurprise() {
     const audio = audioRef.current;
     if (audio && audio.paused) {
       audio.muted = false;
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
     }
     setStep((prev) => prev + 1);
   };
