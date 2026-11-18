@@ -11,77 +11,67 @@ import FinalCelebration from "../components/FinalSection/FinalCelebration";
 function BirthdaySurprise() {
   const [step, setStep] = useState(1);
   const audioRef = useRef(null);
+  // isMuted = true means audio is muted (but always playing from start)
   const [isMuted, setIsMuted] = useState(false);
 
   // ==========================================
   // GLOBAL BACKGROUND MUSIC (Start to End)
-  // Plays "/music/Icelight.mp3" continuously
+  // Uses muted autoplay trick — music starts muted, unmutes on first interaction
   // ==========================================
   useEffect(() => {
+    // Grab the <audio> element injected in index.html (already autoplaying muted)
     let audio = document.getElementById("bg-music");
     if (!audio) {
+      // Fallback: create it if somehow not in DOM
       audio = new Audio("/music/Icelight.mp3");
       audio.id = "bg-music";
       audio.preload = "auto";
       audio.loop = true;
+      audio.muted = true;
       audio.playsInline = true;
       document.body.appendChild(audio);
+      audio.play().catch(() => {});
     }
 
     audio.volume = 0.45;
     audioRef.current = audio;
-    setIsMuted(audio.muted);
 
-    const startAudio = () => {
-      if (audioRef.current && audioRef.current.paused) {
-        audioRef.current.play().catch(() => {
-          // Autoplay was blocked, will start on user interaction
-        });
-      }
-    };
+    // Sync icon with actual muted state (starts muted until user touches screen)
+    const syncMuted = () => setIsMuted(audio.muted);
+    syncMuted();
 
-    // Attempt autoplay immediately
-    startAudio();
-
-    // User gesture fallback (starts on very first click/tap anywhere)
-    const gestureEvents = ["click", "touchstart", "touchend", "pointerdown", "mousedown", "keydown"];
-    const handleFirstGesture = () => {
-      startAudio();
-      gestureEvents.forEach((evt) => {
-        window.removeEventListener(evt, handleFirstGesture, true);
-        document.removeEventListener(evt, handleFirstGesture, true);
-      });
-    };
-
-    gestureEvents.forEach((evt) => {
-      window.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
-      document.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
-    });
+    // Watch for the inline script's unlock (muted → unmuted transition)
+    const observer = new MutationObserver(syncMuted);
+    // No mutation for muted — use polling for 3s then stop
+    const timer = setInterval(() => {
+      setIsMuted(audio.muted);
+      if (!audio.muted) clearInterval(timer);
+    }, 100);
+    setTimeout(() => clearInterval(timer), 5000);
 
     return () => {
-      gestureEvents.forEach((evt) => {
-        window.removeEventListener(evt, handleFirstGesture, true);
-        document.removeEventListener(evt, handleFirstGesture, true);
-      });
+      clearInterval(timer);
     };
   }, []);
 
   const toggleMute = () => {
-    if (!audioRef.current) return;
-    if (audioRef.current.paused) {
-      audioRef.current.play().catch(() => {});
-      audioRef.current.muted = false;
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.muted = false;
+      audio.play().catch(() => {});
       setIsMuted(false);
     } else {
-      audioRef.current.muted = !audioRef.current.muted;
-      setIsMuted(audioRef.current.muted);
+      audio.muted = !audio.muted;
+      setIsMuted(audio.muted);
     }
   };
 
   const nextStep = () => {
-    // Ensure audio starts on step transition if not started yet
-    if (audioRef.current && audioRef.current.paused) {
-      audioRef.current.play().catch(() => {});
+    const audio = audioRef.current;
+    if (audio && audio.paused) {
+      audio.muted = false;
+      audio.play().catch(() => {});
     }
     setStep((prev) => prev + 1);
   };
